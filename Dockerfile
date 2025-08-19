@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 scraper && chown -R scraper:scraper /app
+# Create non-root user for security (avoid UID conflict)
+RUN groupadd -g 1001 scraper && useradd -m -u 1001 -g scraper scraper && chown -R scraper:scraper /app
 
 # Expose port
 EXPOSE 8000
