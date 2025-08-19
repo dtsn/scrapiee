@@ -18,14 +18,12 @@ from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 
 from app.models import ScrapeRequest, ScrapeResponse, HealthResponse
-from app.services.browser_service import BrowserService
-from app.services.scraper_service import ScraperService
+from app.services.scraper_service_v2 import scraper_service_v2
 
 # Load environment variables
 load_dotenv()
 
 # Initialize services
-browser_service = None
 scraper_service = None
 
 # Rate limiting
@@ -34,19 +32,18 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
-    global browser_service, scraper_service
+    global scraper_service
     
     # Startup
-    print("🚀 Starting Scrapiee API...")
-    browser_service = BrowserService()
-    scraper_service = ScraperService(browser_service)
+    print("🚀 Starting Scrapiee API with Lightweight Scraper...")
+    scraper_service = scraper_service_v2
     
     yield
     
     # Shutdown
     print("🛑 Shutting down Scrapiee API...")
-    if browser_service:
-        await browser_service.close()
+    if scraper_service:
+        await scraper_service.close()
 
 # Create FastAPI app
 app = FastAPI(
@@ -136,14 +133,11 @@ async def scrape_url(
     start_time = time.time()
     
     try:
-        result = await scraper_service.scrape_product(
+        result = await scraper_service.scrape_url(
             url=scrape_request.url,
             timeout=scrape_request.timeout,
             wait_for=scrape_request.wait_for
         )
-        
-        # Add processing time
-        result.metadata.processing_time = int((time.time() - start_time) * 1000)
         
         return result
         
@@ -166,31 +160,32 @@ async def scrape_url(
         )
 
 
-@app.get("/api/browser/status")
-async def browser_status(api_key: str = Depends(verify_api_key)):
-    """Get browser service status"""
-    if not browser_service:
-        raise HTTPException(status_code=503, detail="Browser service not available")
+@app.get("/api/scraper/status")
+async def scraper_status(api_key: str = Depends(verify_api_key)):
+    """Get lightweight scraper service status"""
+    if not scraper_service:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
         
     return {
-        "healthy": browser_service.is_healthy(),
-        "active_pages": browser_service.active_pages,
-        "max_concurrent_pages": browser_service.max_concurrent,
+        "healthy": scraper_service.is_healthy(),
+        "engine": "lightweight-hybrid",
+        "methods": ["requests", "playwright"],
         "timestamp": int(time.time())
     }
 
 
-@app.post("/api/browser/restart")
-async def restart_browser(api_key: str = Depends(verify_api_key)):
-    """Restart browser service"""
-    if not browser_service:
-        raise HTTPException(status_code=503, detail="Browser service not available")
+@app.post("/api/scraper/restart")
+async def restart_scraper(api_key: str = Depends(verify_api_key)):
+    """Restart scraper service"""
+    if not scraper_service:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
         
     try:
-        await browser_service.restart()
+        await scraper_service.close()
+        # Re-initialize will happen on next request
         return {
             "success": True,
-            "message": "Browser restarted successfully",
+            "message": "Lightweight scraper restarted successfully",
             "timestamp": int(time.time())
         }
     except Exception as e:

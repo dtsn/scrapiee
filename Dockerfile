@@ -1,14 +1,14 @@
-# Use Python 3.11 full image (has more system libraries)
-FROM python:3.11
+# Use Python 3.11 slim image (lighter than full)
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install minimal system dependencies for Camoufox
+# Install system dependencies for Playwright
 RUN apt-get update && apt-get install -y \
-    xvfb \
-    libgtk-3-0 \
-    libasound2 \
+    wget \
+    curl \
+    ca-certificates \
     fonts-liberation \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -19,8 +19,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Camoufox browser
-RUN python -c "import camoufox; print('Camoufox imported successfully')"
+# Install Playwright browsers (lighter than full browser engines)
+RUN playwright install chromium
+RUN playwright install-deps chromium
 
 # Copy application code
 COPY . .

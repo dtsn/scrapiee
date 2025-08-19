@@ -1,0 +1,283 @@
+{
+  "info": {
+    "name": "Scrapiee API",
+    "description": "FastAPI Web Scraping Service - Product data extraction from e-commerce websites",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "07778d5f-2b2c-41db-8f49-8583962acfe6",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://scrapiee.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "07778d5f-2b2c-41db-8f49-8583962acfe6",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Check service health status"
+      },
+      "response": []
+    },
+    {
+      "name": "Scrape John Lewis Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.johnlewis.com/ninja-af180-max-pro-air-fryer-black/p111501862\",\n  \"timeout\": 30000,\n  \"wait_for\": \"networkidle\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Extract product data from John Lewis air fryer page"
+      },
+      "response": []
+    },
+    {
+      "name": "Scrape Amazon UK Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.amazon.co.uk/dp/B0C1JBQZPX\",\n  \"timeout\": 30000,\n  \"wait_for\": \"networkidle\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Extract product data from Amazon UK product page"
+      },
+      "response": []
+    },
+    {
+      "name": "Scrape Currys Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.currys.co.uk/products/samsung-galaxy-s24-ultra-256-gb-titanium-black-10267140.html\",\n  \"timeout\": 30000,\n  \"wait_for\": \"networkidle\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Extract product data from Currys product page"
+      },
+      "response": []
+    },
+    {
+      "name": "Scrape with Custom Timeout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.johnlewis.com/ninja-af180-max-pro-air-fryer-black/p111501862\",\n  \"timeout\": 15000,\n  \"wait_for\": \"load\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Test scraping with custom timeout and load condition"
+      },
+      "response": []
+    },
+    {
+      "name": "Scrape Generic E-commerce Site",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://example-shop.com/product-page\",\n  \"timeout\": 30000,\n  \"wait_for\": \"domcontentloaded\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Test generic product extraction (replace URL with target site)"
+      },
+      "response": []
+    },
+    {
+      "name": "Scraper Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/scraper/status",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scraper", "status"]
+        },
+        "description": "Check lightweight scraper service status"
+      },
+      "response": []
+    },
+    {
+      "name": "Restart Scraper",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/scraper/restart",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scraper", "restart"]
+        },
+        "description": "Restart lightweight scraper service"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Invalid URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"invalid-url\",\n  \"timeout\": 30000\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Test error handling with invalid URL"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Unauthorized Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://www.johnlewis.com/ninja-af180-max-pro-air-fryer-black/p111501862\",\n  \"timeout\": 30000\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/scrape",
+          "host": ["{{base_url}}"],
+          "path": ["api", "scrape"]
+        },
+        "description": "Test authentication - should return 401 Unauthorized"
+      },
+      "response": []
+    },
+    {
+      "name": "API Documentation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/docs",
+          "host": ["{{base_url}}"],
+          "path": ["docs"]
+        },
+        "description": "Access interactive API documentation (Swagger UI)"
+      },
+      "response": []
+    }
+  ]
+}
