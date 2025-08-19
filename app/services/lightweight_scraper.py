@@ -12,6 +12,7 @@ from urllib.parse import urlparse, urljoin
 import requests
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, Browser, Page, BrowserContext
+from playwright_stealth import stealth_async
 from fake_useragent import UserAgent
 
 
@@ -220,41 +221,8 @@ class LightweightScraper:
                 
                 page = await context.new_page()
                 
-                # Anti-detection: Remove automation indicators
-                await page.evaluate("""
-                    // Remove webdriver property
-                    Object.defineProperty(navigator, 'webdriver', {
-                        get: () => undefined,
-                    });
-                    
-                    // Mock plugins and languages
-                    Object.defineProperty(navigator, 'plugins', {
-                        get: () => [1, 2, 3, 4, 5],
-                    });
-                    
-                    Object.defineProperty(navigator, 'languages', {
-                        get: () => ['en-US', 'en'],
-                    });
-                    
-                    // Mock chrome property
-                    window.chrome = {
-                        runtime: {},
-                    };
-                    
-                    // Mock permissions - safe version
-                    if (navigator.permissions) {
-                        const originalQuery = navigator.permissions.query;
-                        navigator.permissions.query = (parameters) => {
-                            if (parameters && parameters.name === 'notifications') {
-                                return Promise.resolve({ state: 'default' });
-                            }
-                            if (originalQuery) {
-                                return originalQuery(parameters);
-                            }
-                            return Promise.resolve({ state: 'granted' });
-                        };
-                    }
-                """)
+                # Apply stealth techniques using playwright-stealth
+                await stealth_async(page)
             
                 # Set up request interception to block unnecessary resources
                 await page.route("**/*", self._handle_playwright_route)
