@@ -43,6 +43,18 @@ class LightweightScraper:
     
     async def initialize_playwright(self):
         """Initialize Playwright browser (lazy loading)"""
+        # Check if browser is still connected before trying to reuse
+        if self.browser:
+            try:
+                # Test browser connection
+                contexts = self.browser.contexts
+                print("🎭 Reusing existing Playwright browser")
+                return
+            except Exception as e:
+                print(f"⚠️ Existing browser disconnected: {e}")
+                self.browser = None
+                self.playwright = None
+        
         if not self.browser:
             print("🎭 Initializing Playwright browser...")
             try:
@@ -166,62 +178,123 @@ class LightweightScraper:
                 print("❌ Playwright browser not available")
                 return False, None, None
             
-            # Create fresh context for each request to avoid issues
-            context = await self.browser.new_context(
-                viewport={'width': 1366, 'height': 768},
-                user_agent=self.ua.random
-            )
+            # Create fresh context with anti-detection measures
+            context = None
+            try:
+                context = await self.browser.new_context(
+                    viewport={'width': 1366, 'height': 768},
+                    user_agent=self.ua.random,
+                    # Anti-detection measures
+                    java_script_enabled=True,
+                    ignore_https_errors=True,
+                    extra_http_headers={
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Sec-Fetch-Dest': 'document',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'Sec-Fetch-Site': 'none',
+                        'Cache-Control': 'max-age=0'
+                    }
+                )
+                
+                page = await context.new_page()
+                
+                # Anti-detection: Remove automation indicators
+                await page.evaluate("""
+                    // Remove webdriver property
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                    });
+                    
+                    // Mock plugins and languages
+                    Object.defineProperty(navigator, 'plugins', {
+                        get: () => [1, 2, 3, 4, 5],
+                    });
+                    
+                    Object.defineProperty(navigator, 'languages', {
+                        get: () => ['en-US', 'en'],
+                    });
+                    
+                    // Mock chrome property
+                    window.chrome = {
+                        runtime: {},
+                    };
+                    
+                    // Mock permissions - safe version
+                    if (navigator.permissions) {
+                        const originalQuery = navigator.permissions.query;
+                        navigator.permissions.query = (parameters) => {
+                            if (parameters && parameters.name === 'notifications') {
+                                return Promise.resolve({ state: 'default' });
+                            }
+                            if (originalQuery) {
+                                return originalQuery(parameters);
+                            }
+                            return Promise.resolve({ state: 'granted' });
+                        };
+                    }
+                """)
             
-            page = await context.new_page()
-            
-            # Set up request interception to block unnecessary resources
-            await page.route("**/*", self._handle_playwright_route)
-            
-            # Navigate with timeout
-            await page.goto(url, wait_until=wait_for, timeout=min(timeout, self.playwright_timeout))
-            
-            # Get page content
-            content = await page.content()
-            
-            processing_time = int((time.time() - start_time) * 1000)
-            
-            metadata = {
-                'method': 'playwright',
-                'processing_time': processing_time,
-                'content_length': len(content),
-                'wait_for': wait_for
-            }
-            
-            # Clean up context
-            await context.close()
-            
-            print(f"✅ Playwright scraping successful ({processing_time}ms)")
-            return True, content, metadata
-            
+                # Set up request interception to block unnecessary resources
+                await page.route("**/*", self._handle_playwright_route)
+                
+                # Navigate with timeout
+                await page.goto(url, wait_until=wait_for, timeout=min(timeout, self.playwright_timeout))
+                
+                # Get page content
+                content = await page.content()
+                
+                processing_time = int((time.time() - start_time) * 1000)
+                
+                metadata = {
+                    'method': 'playwright',
+                    'processing_time': processing_time,
+                    'content_length': len(content),
+                    'wait_for': wait_for
+                }
+                
+                # Clean up context
+                await context.close()
+                
+                print(f"✅ Playwright scraping successful ({processing_time}ms)")
+                return True, content, metadata
+                
+            except Exception as inner_e:
+                print(f"❌ Context creation failed: {inner_e}")
+                return False, None, None
+        
         except Exception as e:
             error_msg = str(e)[:200]
             print(f"❌ Playwright failed: {error_msg}")
             
-            # Try with different wait condition
+            # Try with different wait condition if timeout
             if wait_for != "domcontentloaded" and "timeout" in error_msg.lower():
                 print("🔄 Retrying with domcontentloaded...")
+                # Clean up current context first
+                if 'context' in locals() and context:
+                    try:
+                        await context.close()
+                    except:
+                        pass
                 return await self.try_playwright_scraping(url, "domcontentloaded", timeout)
         
         finally:
             # Always cleanup page and context
-            if page:
+            if 'page' in locals() and page:
                 try:
                     if not page.is_closed():
                         await page.close()
                 except Exception as e:
                     print(f"⚠️ Warning closing page: {e}")
             
-            # Close context if it exists locally
-            try:
-                if 'context' in locals():
+            # Close context if it exists
+            if 'context' in locals() and context:
+                try:
                     await context.close()
-            except Exception as e:
-                print(f"⚠️ Warning closing context: {e}")
+                except Exception as e:
+                    print(f"⚠️ Warning closing context: {e}")
         
         return False, None, None
     
