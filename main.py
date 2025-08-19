@@ -134,7 +134,7 @@ async def scrape_url(
     
     try:
         result = await scraper_service.scrape_url(
-            url=scrape_request.url,
+            url=str(scrape_request.url),
             timeout=scrape_request.timeout,
             wait_for=scrape_request.wait_for
         )

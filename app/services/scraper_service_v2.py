@@ -21,11 +21,14 @@ class ScraperServiceV2:
         """
         start_time = time.time()
         
+        # Ensure URL is string (convert from Pydantic HttpUrl if needed)
+        url_str = str(url)
+        
         try:
-            print(f"🕷️ Starting scrape for: {url}")
+            print(f"🕷️ Starting scrape for: {url_str}")
             
             # Scrape with hybrid approach
-            result = await self.scraper.scrape_url(url, timeout, wait_for)
+            result = await self.scraper.scrape_url(url_str, timeout, wait_for)
             
             if result['success']:
                 # Extract product data from HTML content
@@ -46,7 +49,7 @@ class ScraperServiceV2:
                 mock_page = MockPage(result['content'])
                 
                 # Extract product data
-                product_data = await self.extractor.extract_product_data(mock_page, url)
+                product_data = await self.extractor.extract_product_data(mock_page, url_str)
                 
                 processing_time = int((time.time() - start_time) * 1000)
                 
@@ -58,7 +61,7 @@ class ScraperServiceV2:
                         "currency": product_data.get("currency", "USD"),
                         "description": product_data.get("description"),
                         "image": product_data.get("image"),
-                        "url": url
+                        "url": url_str
                     },
                     "error": None,
                     "metadata": {
@@ -71,7 +74,7 @@ class ScraperServiceV2:
                 }
             else:
                 # Classify error type
-                error_code, error_message = self._classify_error(result['error'], url)
+                error_code, error_message = self._classify_error(result['error'], url_str)
                 
                 return {
                     "success": False,
@@ -89,7 +92,7 @@ class ScraperServiceV2:
                 }
                 
         except Exception as e:
-            error_code, error_message = self._classify_error(str(e), url)
+            error_code, error_message = self._classify_error(str(e), url_str)
             
             return {
                 "success": False,
