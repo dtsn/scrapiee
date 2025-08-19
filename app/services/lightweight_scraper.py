@@ -48,11 +48,12 @@ class LightweightScraper:
             try:
                 self.playwright = await async_playwright().start()
                 
-                # Use Chromium with resource-constrained settings for Render.com
+                # Use Chromium with cloud-optimized settings for Render.com
                 self.browser = await self.playwright.chromium.launch(
                     headless=True,
                     args=[
                         '--no-sandbox',
+                        '--disable-setuid-sandbox',  # Required for cloud deployment
                         '--disable-dev-shm-usage',
                         '--disable-gpu',
                         '--disable-web-security',
@@ -62,11 +63,11 @@ class LightweightScraper:
                         '--disable-extensions',
                         '--disable-plugins',
                         '--disable-images',  # Block images for speed
-                        '--disable-javascript',  # Disable JS to reduce load
                         '--disable-background-timer-throttling',
                         '--disable-backgrounding-occluded-windows',
                         '--disable-renderer-backgrounding',
                         '--single-process',  # Use single process for low memory
+                        '--no-zygote',  # Better for containerized environments
                         '--memory-pressure-off',
                         '--max_old_space_size=512',  # Limit memory usage
                     ]
