@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     xvfb \
     libgtk-3-0 \
-    libgtk-3-dev \
     libgdk-pixbuf2.0-0 \
     libxss1 \
     libasound2 \
@@ -22,9 +21,13 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libatk-bridge2.0-0 \
     libdrm2 \
-    libgtk-3-0 \
-    libxss1 \
+    libxcb1 \
+    libxfixes3 \
+    libxcursor1 \
+    libxi6 \
     fonts-liberation \
+    ca-certificates \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
