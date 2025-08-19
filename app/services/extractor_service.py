@@ -21,6 +21,16 @@ class ExtractorService:
                 'h1.a-size-large',
                 'h1 span'
             ],
+            "price": [
+                '.a-price-whole',
+                '.a-price .a-offscreen',
+                '.a-price-range .a-price .a-offscreen',
+                '#priceblock_dealprice',
+                '#priceblock_ourprice',
+                '.a-price.a-text-price.a-size-medium.a-color-base',
+                '.a-price-current',
+                '[data-testid="price"] .a-price .a-offscreen'
+            ],
             "description": [
                 '#feature-bullets ul',
                 '.a-unordered-list.a-vertical',
@@ -52,6 +62,43 @@ class ExtractorService:
                 '.product-description',
                 '.description-content',
                 '.product-info'
+            ]
+        },
+        "smythstoys": {
+            "title": [
+                '.product-name h1',
+                '.product-title',
+                '.pdp-product-name'
+            ],
+            "price": [
+                '.price-current',
+                '.current-price',
+                '.product-price .price',
+                '[data-testid="price"]'
+            ],
+            "description": [
+                '.product-description',
+                '.product-overview',
+                '.description-content'
+            ]
+        },
+        "thetoyshop": {
+            "title": [
+                '.product-name',
+                '.product-title',
+                'h1'
+            ],
+            "price": [
+                '.price-current',
+                '.current-price', 
+                '.product-price',
+                '[data-price]',
+                '.price .value'
+            ],
+            "description": [
+                '.product-description',
+                '.product-details',
+                '.description'
             ]
         }
     }
@@ -132,6 +179,10 @@ class ExtractorService:
             return 'johnlewis'
         elif 'currys' in domain:
             return 'currys'
+        elif 'smythstoys' in domain:
+            return 'smythstoys'
+        elif 'thetoyshop' in domain:
+            return 'thetoyshop'
         
         return None
     
@@ -188,7 +239,7 @@ class ExtractorService:
         
         # Extract data using smart selectors
         title = self._extract_title(soup, url)
-        price = self._extract_price(soup) 
+        price = self._extract_price(soup, url) 
         description = self._extract_description(soup, url)
         image = self._extract_image(soup, url)
         currency = self._detect_currency(price, url)
@@ -252,8 +303,25 @@ class ExtractorService:
                 continue
         return None
     
-    def _extract_price(self, soup: BeautifulSoup) -> Optional[str]:
-        """Extract product price"""
+    def _extract_price(self, soup: BeautifulSoup, url: str = "") -> Optional[str]:
+        """Extract product price with site-specific optimizations"""
+        site_type = self._get_site_type(url) if url else None
+        
+        # Try site-specific selectors first
+        if site_type and site_type in self.SITE_SPECIFIC_RULES:
+            price_selectors = self.SITE_SPECIFIC_RULES[site_type].get('price', [])
+            for selector in price_selectors:
+                try:
+                    elements = soup.select(selector)
+                    for element in elements:
+                        text = element.get_text(strip=True)
+                        # Check if text contains price-like patterns
+                        if text and re.search(r'[\d\$€£¥₹]', text):
+                            return text
+                except Exception:
+                    continue
+        
+        # Fallback to generic selectors
         for selector in self.EXTRACTION_RULES["price"]:
             try:
                 elements = soup.select(selector)

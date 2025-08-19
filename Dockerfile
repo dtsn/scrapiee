@@ -1,15 +1,13 @@
-# Use Python 3.11 slim image (lighter than full)
-FROM python:3.11-slim
+# Use Python 3.11 full image for better system library support
+FROM python:3.11
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Playwright
+# Update package lists and install essential dependencies
 RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
-    ca-certificates \
     fonts-liberation \
+    fonts-unifont \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,7 +17,7 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (lighter than full browser engines)
+# Install Playwright browsers with dependencies
 RUN playwright install chromium
 RUN playwright install-deps chromium
 

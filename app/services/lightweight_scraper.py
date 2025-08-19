@@ -6,6 +6,7 @@ Combines requests + Playwright for optimal performance and success rate
 import asyncio
 import os
 import time
+import random
 from typing import Optional, Dict, Any, Tuple
 from urllib.parse import urlparse, urljoin
 import requests
@@ -26,14 +27,18 @@ class LightweightScraper:
         self.requests_timeout = 15  # Fast timeout for requests
         self.playwright_timeout = 30000  # Longer timeout for complex sites
         
-        # Headers for requests
-        self.headers = {
-            'User-Agent': self.ua.random,
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
+        # Headers for requests (more comprehensive to avoid blocking)
+        self.base_headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9,en-GB;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1'
         }
     
     async def initialize_playwright(self):
@@ -56,14 +61,7 @@ class LightweightScraper:
                     '--disable-extensions',
                     '--disable-plugins',
                     '--disable-images',  # Block images for speed
-                    '--disable-javascript',  # Try without JS first
                 ]
-            )
-            
-            # Create persistent context
-            self.context = await self.browser.new_context(
-                viewport={'width': 1366, 'height': 768},
-                user_agent=self.ua.random
             )
             
             print("✅ Playwright browser initialized")
@@ -79,7 +77,31 @@ class LightweightScraper:
             print(f"🚀 Trying requests scraping for {urlparse(url).netloc}")
             
             session = requests.Session()
-            session.headers.update(self.headers)
+            
+            # Create dynamic headers with fresh user agent
+            headers = self.base_headers.copy()
+            headers['User-Agent'] = self.ua.random
+            
+            # Add domain-specific headers for better success
+            domain = urlparse(url).netloc.lower()
+            if 'currys' in domain:
+                headers['Referer'] = 'https://www.google.co.uk/'
+                headers['Sec-Fetch-Site'] = 'cross-site'
+            elif 'amazon' in domain:
+                headers['Referer'] = 'https://www.amazon.co.uk/'
+                headers['Sec-Fetch-Site'] = 'same-origin'
+            elif 'smythstoys' in domain:
+                headers['Referer'] = 'https://www.google.co.uk/'
+                headers['Sec-Fetch-Site'] = 'cross-site'
+            elif 'thetoyshop' in domain:
+                headers['Referer'] = 'https://www.google.co.uk/'
+                headers['Sec-Fetch-Site'] = 'cross-site'
+            
+            session.headers.update(headers)
+            
+            # Add random delay to mimic human behavior (0.5-2.5 seconds)
+            delay = random.uniform(0.5, 2.5)
+            time.sleep(delay)
             
             response = session.get(url, timeout=self.requests_timeout, allow_redirects=True)
             
@@ -118,13 +140,20 @@ class LightweightScraper:
         Returns: (success, html_content, metadata)
         """
         start_time = time.time()
+        page = None
         
         try:
             print(f"🎭 Trying Playwright scraping for {urlparse(url).netloc}")
             
             await self.initialize_playwright()
             
-            page = await self.context.new_page()
+            # Create fresh context for each request to avoid issues
+            context = await self.browser.new_context(
+                viewport={'width': 1366, 'height': 768},
+                user_agent=self.ua.random
+            )
+            
+            page = await context.new_page()
             
             # Set up request interception to block unnecessary resources
             await page.route("**/*", self._handle_playwright_route)
@@ -144,7 +173,8 @@ class LightweightScraper:
                 'wait_for': wait_for
             }
             
-            await page.close()
+            # Clean up context
+            await context.close()
             
             print(f"✅ Playwright scraping successful ({processing_time}ms)")
             return True, content, metadata
@@ -157,6 +187,22 @@ class LightweightScraper:
             if wait_for != "domcontentloaded" and "timeout" in error_msg.lower():
                 print("🔄 Retrying with domcontentloaded...")
                 return await self.try_playwright_scraping(url, "domcontentloaded")
+        
+        finally:
+            # Always cleanup page and context
+            if page:
+                try:
+                    if not page.is_closed():
+                        await page.close()
+                except Exception as e:
+                    print(f"⚠️ Warning closing page: {e}")
+            
+            # Close context if it exists locally
+            try:
+                if 'context' in locals():
+                    await context.close()
+            except Exception as e:
+                print(f"⚠️ Warning closing context: {e}")
         
         return False, None, None
     
@@ -210,14 +256,19 @@ class LightweightScraper:
     
     async def close(self):
         """Clean up resources"""
-        if self.context:
-            await self.context.close()
+        try:
+            if self.browser:
+                await self.browser.close()
+                self.browser = None
+        except Exception as e:
+            print(f"⚠️ Warning closing browser: {e}")
         
-        if self.browser:
-            await self.browser.close()
-        
-        if self.playwright:
-            await self.playwright.stop()
+        try:
+            if self.playwright:
+                await self.playwright.stop()
+                self.playwright = None
+        except Exception as e:
+            print(f"⚠️ Warning stopping playwright: {e}")
         
         print("🔒 Lightweight scraper closed")
     
