@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: scrapiee-api
+    env: python
+    plan: free
+    region: oregon
+    
+    # Build settings
+    buildCommand: |
+      pip install -r requirements.txt
+      python -c "from camoufox import install_browser; install_browser()"
+    startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SCRAPER_API_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: BROWSER_TIMEOUT
+        value: 30000
+      - key: MAX_CONCURRENT_REQUESTS
+        value: 2
+      - key: RATE_LIMIT_REQUESTS
+        value: 10
+      - key: RATE_LIMIT_WINDOW
+        value: 60
+        
+    # Resource settings for free tier
+    disk:
+      name: scrapiee-disk
+      sizeGB: 1
+      
+    # Auto-deploy
+    autoDeploy: true
