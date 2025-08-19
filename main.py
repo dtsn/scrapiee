@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Scrapiee - FastAPI Web Scraping Service
-API-driven web scraping service using Camoufox for product data extraction
+API-driven web scraping service using lightweight hybrid approach for product data extraction
 """
 
 import os
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Scrapiee API",
-    description="API-driven web scraping service using Camoufox",
+    description="API-driven web scraping service using lightweight hybrid approach",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -128,7 +128,7 @@ async def scrape_url(
     Scrape product data from a URL
     
     Extracts title, price, currency, description, and image from the provided URL
-    using intelligent element detection and Camoufox browser automation.
+    using intelligent element detection and hybrid requests/Playwright automation.
     """
     start_time = time.time()
     

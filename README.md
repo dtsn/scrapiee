@@ -1,11 +1,11 @@
 # Scrapiee - FastAPI Web Scraping Service
 
-A modern, high-performance web scraping API built with FastAPI and Camoufox, designed for extracting product data from e-commerce websites.
+A modern, high-performance web scraping API built with FastAPI and a lightweight hybrid approach (requests + Playwright), designed for extracting product data from e-commerce websites.
 
 ## 🚀 Features
 
 - **⚡ FastAPI Framework**: Modern, fast, with automatic API documentation
-- **🦊 Camoufox Integration**: Python-native anti-detection browser automation
+- **🚀 Hybrid Approach**: Fast requests-first with Playwright fallback for reliable scraping
 - **🔐 Secure Authentication**: API key authentication with rate limiting
 - **🎯 Smart Data Extraction**: Intelligent element detection for product information
 - **📊 Structured Responses**: Clean JSON with comprehensive metadata
@@ -49,7 +49,7 @@ Extract product data from a URL.
   "metadata": {
     "timestamp": 1642608000,
     "processing_time": 3421,
-    "extraction_method": "smart-selectors"
+    "extraction_method": "hybrid-requests"
   }
 }
 ```
@@ -57,11 +57,11 @@ Extract product data from a URL.
 #### `GET /health`
 Service health check.
 
-#### `GET /api/browser/status`
-Browser service status (authenticated).
+#### `GET /api/scraper/status`
+Scraper service status (authenticated).
 
-#### `POST /api/browser/restart`
-Restart browser service (authenticated).
+#### `POST /api/scraper/restart`
+Restart scraper service (authenticated).
 
 ## 🛠️ Local Development
 
@@ -96,9 +96,9 @@ scrapiee/
 │   ├── models.py              # Pydantic models for requests/responses
 │   └── services/
 │       ├── __init__.py
-│       ├── browser_service.py # Camoufox browser management
+│       ├── lightweight_scraper.py # Hybrid requests+Playwright scraper
 │       ├── extractor_service.py # Data extraction logic
-│       └── scraper_service.py # Main scraping orchestration
+│       └── scraper_service_v2.py # Main scraping orchestration
 ├── main.py                    # FastAPI application entry point
 ├── requirements.txt           # Python dependencies
 ├── Dockerfile                 # Docker configuration
@@ -167,12 +167,12 @@ const data = await response.json();
 │  └─────────────────┘    └──────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────────┐    ┌──────────────────────────────────┐ │
-│  │ Scraper Service │    │      Browser Service             │ │
+│  │ Scraper Service │    │   Lightweight Scraper           │ │
 │  │                 │    │                                  │ │
-│  │ • Request       │    │ • Camoufox Management           │ │
-│  │   Orchestration │    │ • Page Lifecycle                │ │
-│  │ • Error         │    │ • Resource Optimization         │ │
-│  │   Handling      │    │ • Concurrent Request Limiting   │ │
+│  │ • Request       │    │ • Requests-first Strategy       │ │
+│  │   Orchestration │    │ • Playwright Fallback           │ │
+│  │ • Error         │    │ • Anti-blocking Measures        │ │
+│  │   Handling      │    │ • Resource Optimization         │ │
 │  └─────────────────┘    └──────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────────┐ │
@@ -212,7 +212,7 @@ docker run -p 8000:8000 -e SCRAPER_API_KEY=your-key scrapiee
 | `SCRAPER_API_KEY` | - | API authentication key |
 | `PORT` | 8000 | Server port |
 | `ENVIRONMENT` | development | Environment mode |
-| `BROWSER_TIMEOUT` | 30000 | Browser timeout (ms) |
+| `PLAYWRIGHT_TIMEOUT` | 30000 | Playwright timeout (ms) |
 | `MAX_CONCURRENT_REQUESTS` | 2 | Max concurrent scraping |
 | `RATE_LIMIT_REQUESTS` | 10 | Requests per time window |
 | `RATE_LIMIT_WINDOW` | 60 | Rate limit window (seconds) |
