@@ -1,28 +1,15 @@
-# Use Python 3.11 slim image
-FROM python:3.11-slim
+# Use Python 3.11 full image (has more system libraries)
+FROM python:3.11
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Camoufox and browsers
+# Install minimal system dependencies for Camoufox
 RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
-    gnupg \
-    unzip \
     xvfb \
     libgtk-3-0 \
-    libgdk-pixbuf2.0-0 \
-    libx11-6 \
-    libxext6 \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libxrandr2 \
-    libxss1 \
     libasound2 \
     fonts-liberation \
-    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
