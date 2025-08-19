@@ -45,26 +45,39 @@ class LightweightScraper:
         """Initialize Playwright browser (lazy loading)"""
         if not self.browser:
             print("🎭 Initializing Playwright browser...")
-            self.playwright = await async_playwright().start()
-            
-            # Use Chromium (lighter than Firefox)
-            self.browser = await self.playwright.chromium.launch(
-                headless=True,
-                args=[
-                    '--no-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--disable-web-security',
-                    '--disable-blink-features=AutomationControlled',
-                    '--no-first-run',
-                    '--no-default-browser-check',
-                    '--disable-extensions',
-                    '--disable-plugins',
-                    '--disable-images',  # Block images for speed
-                ]
-            )
-            
-            print("✅ Playwright browser initialized")
+            try:
+                self.playwright = await async_playwright().start()
+                
+                # Use Chromium with resource-constrained settings for Render.com
+                self.browser = await self.playwright.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--disable-web-security',
+                        '--disable-blink-features=AutomationControlled',
+                        '--no-first-run',
+                        '--no-default-browser-check',
+                        '--disable-extensions',
+                        '--disable-plugins',
+                        '--disable-images',  # Block images for speed
+                        '--disable-javascript',  # Disable JS to reduce load
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding',
+                        '--single-process',  # Use single process for low memory
+                        '--memory-pressure-off',
+                        '--max_old_space_size=512',  # Limit memory usage
+                    ]
+                )
+                
+                print("✅ Playwright browser initialized")
+            except Exception as e:
+                print(f"⚠️ Playwright initialization failed: {e}")
+                print("🔄 Playwright will be unavailable, using requests-only mode")
+                self.browser = None
+                self.playwright = None
     
     def try_requests_scraping(self, url: str) -> Tuple[bool, Optional[str], Optional[Dict]]:
         """
@@ -134,7 +147,7 @@ class LightweightScraper:
         
         return False, None, None
     
-    async def try_playwright_scraping(self, url: str, wait_for: str = "load") -> Tuple[bool, Optional[str], Optional[Dict]]:
+    async def try_playwright_scraping(self, url: str, wait_for: str = "load", timeout: int = 30000) -> Tuple[bool, Optional[str], Optional[Dict]]:
         """
         Fallback to Playwright for complex sites
         Returns: (success, html_content, metadata)
@@ -146,6 +159,11 @@ class LightweightScraper:
             print(f"🎭 Trying Playwright scraping for {urlparse(url).netloc}")
             
             await self.initialize_playwright()
+            
+            # Check if browser is available after initialization
+            if not self.browser:
+                print("❌ Playwright browser not available")
+                return False, None, None
             
             # Create fresh context for each request to avoid issues
             context = await self.browser.new_context(
@@ -159,7 +177,7 @@ class LightweightScraper:
             await page.route("**/*", self._handle_playwright_route)
             
             # Navigate with timeout
-            await page.goto(url, wait_until=wait_for, timeout=self.playwright_timeout)
+            await page.goto(url, wait_until=wait_for, timeout=min(timeout, self.playwright_timeout))
             
             # Get page content
             content = await page.content()
@@ -186,7 +204,7 @@ class LightweightScraper:
             # Try with different wait condition
             if wait_for != "domcontentloaded" and "timeout" in error_msg.lower():
                 print("🔄 Retrying with domcontentloaded...")
-                return await self.try_playwright_scraping(url, "domcontentloaded")
+                return await self.try_playwright_scraping(url, "domcontentloaded", timeout)
         
         finally:
             # Always cleanup page and context
@@ -228,10 +246,14 @@ class LightweightScraper:
             # Step 1: Try requests scraping first
             success, content, metadata = self.try_requests_scraping(url)
             
-            # Step 2: If requests failed, try Playwright
+            # Step 2: If requests failed, try Playwright (if available)
             if not success:
                 print("🔄 Falling back to Playwright...")
-                success, content, metadata = await self.try_playwright_scraping(url, wait_for)
+                try:
+                    success, content, metadata = await self.try_playwright_scraping(url, wait_for, timeout)
+                except Exception as e:
+                    print(f"⚠️ Playwright fallback failed: {e}")
+                    success, content, metadata = False, None, None
             
             if success and content:
                 return {

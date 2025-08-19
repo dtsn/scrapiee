@@ -1,13 +1,28 @@
-# Use Python 3.11 full image for better system library support
-FROM python:3.11
+# Use Python 3.11 slim image for better Render.com compatibility
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Update package lists and install essential dependencies
+# Set environment variables for Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
+
+# Update package lists and install essential system dependencies
 RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    gnupg \
+    ca-certificates \
     fonts-liberation \
-    fonts-unifont \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxcomposite1 \
+    libxrandr2 \
+    libgbm1 \
+    libxss1 \
+    libasound2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,16 +32,14 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers with dependencies
+# Install Playwright and browsers
 RUN playwright install chromium
-RUN playwright install-deps chromium
 
 # Copy application code
 COPY . .
 
-# Create non-root user for security
+# Create non-root user for security (but keep permissions for browser)
 RUN useradd -m -u 1000 scraper && chown -R scraper:scraper /app
-USER scraper
 
 # Expose port
 EXPOSE 8000
@@ -35,5 +48,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start the application
+# Start the application as scraper user
+USER scraper
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
