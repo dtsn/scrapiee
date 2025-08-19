@@ -30,15 +30,18 @@ class LightweightScraper:
         # Headers for requests (more comprehensive to avoid blocking)
         self.base_headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9,en-GB;q=0.8',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',  # UK preference first
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-Site': 'cross-site',  # More realistic for production
             'Cache-Control': 'max-age=0',
-            'DNT': '1'
+            'DNT': '1',
+            'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Linux"'
         }
     
     async def initialize_playwright(self):
@@ -92,15 +95,17 @@ class LightweightScraper:
                 self.browser = None
                 self.playwright = None
     
-    def try_requests_scraping(self, url: str) -> Tuple[bool, Optional[str], Optional[Dict]]:
+    def try_requests_scraping(self, url: str, retry_count: int = 0) -> Tuple[bool, Optional[str], Optional[Dict]]:
         """
         Try fast requests-based scraping first
         Returns: (success, html_content, metadata)
         """
         start_time = time.time()
+        max_retries = 2 if os.getenv('RENDER_SERVICE_NAME') or os.getenv('RENDER') else 1
         
         try:
-            print(f"🚀 Trying requests scraping for {urlparse(url).netloc}")
+            print(f"🚀 Trying requests scraping for {urlparse(url).netloc}" + 
+                  (f" (retry {retry_count + 1})" if retry_count > 0 else ""))
             
             session = requests.Session()
             
@@ -125,8 +130,12 @@ class LightweightScraper:
             
             session.headers.update(headers)
             
-            # Add random delay to mimic human behavior (0.5-2.5 seconds)
-            delay = random.uniform(0.5, 2.5)
+            # Add random delay to mimic human behavior (longer in production)
+            is_production = os.getenv('RENDER_SERVICE_NAME') or os.getenv('RENDER')
+            if is_production:
+                delay = random.uniform(1.0, 4.0)  # Longer delays for production
+            else:
+                delay = random.uniform(0.5, 2.5)  # Shorter delays for development
             time.sleep(delay)
             
             response = session.get(url, timeout=self.requests_timeout, allow_redirects=True)
@@ -154,9 +163,19 @@ class LightweightScraper:
                 print(f"❌ Requests failed with status {response.status_code}")
                 
         except requests.exceptions.RequestException as e:
-            print(f"❌ Requests failed: {str(e)[:100]}")
+            error_type = type(e).__name__
+            print(f"❌ Requests failed ({error_type}): {str(e)[:150]}")
+            
+            # Retry logic for production
+            if retry_count < max_retries - 1:
+                retry_delay = random.uniform(2.0, 5.0)
+                print(f"🔄 Retrying in {retry_delay:.1f}s...")
+                time.sleep(retry_delay)
+                return self.try_requests_scraping(url, retry_count + 1)
+                
         except Exception as e:
-            print(f"❌ Requests error: {str(e)[:100]}")
+            error_type = type(e).__name__
+            print(f"❌ Requests error ({error_type}): {str(e)[:150]}")
         
         return False, None, None
     
