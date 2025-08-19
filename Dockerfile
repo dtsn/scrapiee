@@ -11,6 +11,20 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     unzip \
     xvfb \
+    libgtk-3-0 \
+    libgtk-3-dev \
+    libgdk-pixbuf2.0-0 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    libxrandr2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libgtk-3-0 \
+    libxss1 \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
