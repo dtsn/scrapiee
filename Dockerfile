@@ -13,18 +13,14 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     libgtk-3-0 \
     libgdk-pixbuf2.0-0 \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
     libxss1 \
     libasound2 \
-    libxtst6 \
-    libxrandr2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libxcb1 \
-    libxfixes3 \
-    libxcursor1 \
-    libxi6 \
     fonts-liberation \
     ca-certificates \
     && apt-get clean \
