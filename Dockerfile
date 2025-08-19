@@ -8,13 +8,21 @@ WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
 
-# Update package lists and install essential system dependencies
+# Update package lists and install ALL Playwright system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
     gnupg \
     ca-certificates \
     fonts-liberation \
+    # Core Playwright dependencies from error message
+    libcups2 \
+    libxkbcommon0 \
+    libxdamage1 \
+    libxfixes3 \
+    libpango-1.0-0 \
+    libcairo2 \
+    # Additional browser dependencies
     libnss3 \
     libatk-bridge2.0-0 \
     libdrm2 \
@@ -23,6 +31,11 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     libxss1 \
     libasound2 \
+    libatspi2.0-0 \
+    libgtk-3-0 \
+    libgconf-2-4 \
+    libxext6 \
+    libx11-6 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -32,7 +45,8 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright and browsers
+# Install Playwright system dependencies and browsers
+RUN playwright install-deps chromium || true
 RUN playwright install chromium
 
 # Copy application code

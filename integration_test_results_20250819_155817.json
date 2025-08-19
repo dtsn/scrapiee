@@ -1,0 +1,146 @@
+{
+  "summary": {
+    "total_tests": 7,
+    "successful_tests": 5,
+    "success_rate": 0.7142857142857143,
+    "average_processing_time": 2448,
+    "price_accuracy_score": 1.0,
+    "method_breakdown": {
+      "hybrid-requests": 5,
+      "api-failed": 2
+    },
+    "site_breakdown": {
+      "Halfords": {
+        "success": 1,
+        "total": 1
+      },
+      "Decathlon": {
+        "success": 0,
+        "total": 1
+      },
+      "John Lewis": {
+        "success": 1,
+        "total": 1
+      },
+      "Amazon UK": {
+        "success": 1,
+        "total": 1
+      },
+      "Argos": {
+        "success": 1,
+        "total": 1
+      },
+      "Smyths Toys": {
+        "success": 0,
+        "total": 1
+      },
+      "The Toy Shop": {
+        "success": 1,
+        "total": 1
+      }
+    },
+    "overall_processing_time": 24153,
+    "timestamp": "2025-08-19T15:58:17.663091",
+    "test_type": "integration_local_server"
+  },
+  "detailed_results": [
+    {
+      "site_name": "Halfords",
+      "url": "https://www.halfords.com/bikes/hybrid-bikes/boardman-mtx-8.6-mens-hybrid-bike-2021---s-m-l-frames-366006.html",
+      "expected_price": "£600",
+      "success": true,
+      "actual_price": "600.00",
+      "actual_currency": "USD",
+      "actual_title": "Boardman MTX 8.6 Mens Hybrid Bike - S, M, L Frames366006",
+      "processing_time": 1831,
+      "extraction_method": "hybrid-requests",
+      "price_accuracy": 1.0,
+      "error_message": null,
+      "http_status": 200
+    },
+    {
+      "site_name": "Decathlon",
+      "url": "https://www.decathlon.co.uk/p/4-man-inflatable-blackout-tent-air-seconds-4-1/_/R-p-302837?mc=8648382&c=cappuccino%20beige",
+      "expected_price": "£299.99",
+      "success": false,
+      "actual_price": null,
+      "actual_currency": null,
+      "actual_title": null,
+      "processing_time": 3978,
+      "extraction_method": "api-failed",
+      "price_accuracy": 0.0,
+      "error_message": "General scraping failure",
+      "http_status": 200
+    },
+    {
+      "site_name": "John Lewis",
+      "url": "https://www.johnlewis.com/john-lewis-handheld-foldable-desk-fan-4-inch/white/p5873998",
+      "expected_price": "£12",
+      "success": true,
+      "actual_price": "12.00",
+      "actual_currency": "USD",
+      "actual_title": "John LewisANYDAYJohn Lewis Handheld & Foldable Desk Fan, 4 inch, White",
+      "processing_time": 1912,
+      "extraction_method": "hybrid-requests",
+      "price_accuracy": 1.0,
+      "error_message": null,
+      "http_status": 200
+    },
+    {
+      "site_name": "Amazon UK",
+      "url": "https://www.amazon.co.uk/dp/B0CK6T245F/ref=sspa_dk_detail_3?pd_rd_i=B0CK6T245F&pd_rd_w=ben5z&content-id=amzn1.sym.9a64fe05-cdee-4d53-a27b-f3614d726545&pf_rd_p=9a64fe05-cdee-4d53-a27b-f3614d726545&pf_rd_r=83DJ4NT8B3VKXPSV5B8E&pd_rd_wg=Eou0Q&pd_rd_r=a9e726ec-70c2-46fe-974d-8f1955256835&sp_csd=d2lkZ2V0TmFtZT1zcF9kZXRhaWxfdGhlbWF0aWM&th=1",
+      "expected_price": "£259",
+      "success": true,
+      "actual_price": "259.00",
+      "actual_currency": "GBP",
+      "actual_title": "ECOFLOW Portable Power Station RIVER 2 MAX, 512Wh LiFeP04 Battery, the product is unused, only part of the packaging is defective (Renewed)",
+      "processing_time": 3375,
+      "extraction_method": "hybrid-requests",
+      "price_accuracy": 1.0,
+      "error_message": null,
+      "http_status": 200
+    },
+    {
+      "site_name": "Argos",
+      "url": "https://www.argos.co.uk/product/4494643?clickPR=plp:1:67",
+      "expected_price": "£329",
+      "success": true,
+      "actual_price": "329.00",
+      "actual_currency": "GBP",
+      "actual_title": "Technology",
+      "processing_time": 1549,
+      "extraction_method": "hybrid-requests",
+      "price_accuracy": 1.0,
+      "error_message": null,
+      "http_status": 200
+    },
+    {
+      "site_name": "Smyths Toys",
+      "url": "https://www.smythstoys.com/uk/en-gb/toys/sensory-toys/physical-play-sensory-toys/5ft-smoby-life-wave-slide/p/245916",
+      "expected_price": "£49.99",
+      "success": false,
+      "actual_price": null,
+      "actual_currency": null,
+      "actual_title": null,
+      "processing_time": 2447,
+      "extraction_method": "api-failed",
+      "price_accuracy": 0.0,
+      "error_message": "General scraping failure",
+      "http_status": 200
+    },
+    {
+      "site_name": "The Toy Shop",
+      "url": "https://www.thetoyshop.com/transport-toys/race-tracks/Hot-Wheels-City-T-Rex-Blaze-Battle-Playset/p/572347",
+      "expected_price": "£27.99",
+      "success": true,
+      "actual_price": "27.99",
+      "actual_currency": "USD",
+      "actual_title": "Hot Wheels City T-Rex Blaze Battle Playset",
+      "processing_time": 2044,
+      "extraction_method": "hybrid-requests",
+      "price_accuracy": 1.0,
+      "error_message": null,
+      "http_status": 200
+    }
+  ]
+}

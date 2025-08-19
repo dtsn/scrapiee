@@ -6,6 +6,7 @@ import re
 from typing import Optional, Dict, Any
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
+from .intelligent_price_extractor import intelligent_price_extractor
 
 
 class ExtractorService:
@@ -304,7 +305,17 @@ class ExtractorService:
         return None
     
     def _extract_price(self, soup: BeautifulSoup, url: str = "") -> Optional[str]:
-        """Extract product price with site-specific optimizations"""
+        """Extract product price using intelligent extraction with scoring"""
+        # Use the new intelligent price extractor
+        price = intelligent_price_extractor.extract_price(soup, url)
+        if price:
+            return price
+        
+        # Fallback to legacy method if intelligent extraction fails
+        return self._extract_price_legacy(soup, url)
+    
+    def _extract_price_legacy(self, soup: BeautifulSoup, url: str = "") -> Optional[str]:
+        """Legacy price extraction method as fallback"""
         site_type = self._get_site_type(url) if url else None
         
         # Try site-specific selectors first
